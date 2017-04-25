@@ -66,8 +66,8 @@ $(function() {
 // 格式化操作按钮
 function actionFormatter(value, row, index) {
     return [
-        '<a class="update" href="javascript:;" onclick="updateAction()" data-toggle="tooltip" title="Edit"><i class="glyphicon glyphicon-edit"></i></a>　',
-        '<a class="delete" href="javascript:;" onclick="deleteAction()" data-toggle="tooltip" title="Remove"><i class="glyphicon glyphicon-remove"></i></a>'
+        '<a class="update" href="javascript:;" onclick="updateAction('+row.pageId+')" data-toggle="tooltip" title="Edit"><i class="glyphicon glyphicon-edit"></i></a>　',
+        '<a class="delete" href="javascript:;" onclick="deleteAction('+row.pageId+')" data-toggle="tooltip" title="Remove"><i class="glyphicon glyphicon-remove"></i></a>'
     ].join('');
 }
 // 格式化时间
@@ -88,9 +88,18 @@ function createAction() {
 }
 // 编辑
 var updateDialog;
-function updateAction() {
+function updateAction(pageId) {
 	var rows = $table.bootstrapTable('getSelections');
-	if (rows.length != 1) {
+	if (pageId != null) {
+        updateDialog = $.dialog({
+            animationSpeed: 300,
+            title: '编辑单页',
+            content: 'url:${basePath}/manage/page/update/' + pageId,
+            onContentReady: function () {
+                initMaterialInput();
+            }
+        });
+	} else if (rows.length != 1 && pageId == null) {
 		$.confirm({
 			title: false,
 			content: '请选择一条记录！',
@@ -116,9 +125,87 @@ function updateAction() {
 }
 // 删除
 var deleteDialog;
-function deleteAction() {
+function deleteAction(pageId) {
 	var rows = $table.bootstrapTable('getSelections');
-	if (rows.length == 0) {
+	if (pageId != null) {
+        deleteDialog = $.confirm({
+            type: 'red',
+            animationSpeed: 300,
+            title: false,
+            content: '确认删除该单页吗？',
+            buttons: {
+                confirm: {
+                    text: '确认',
+                    btnClass: 'waves-effect waves-button',
+                    action: function () {
+                        var ids = new Array();
+						ids.push(pageId);
+                        $.ajax({
+                            type: 'get',
+                            url: '${basePath}/manage/page/delete/' + ids.join("-"),
+                            success: function(result) {
+                                if (result.code != 1) {
+                                    if (result.data instanceof Array) {
+                                        $.each(result.data, function(index, value) {
+                                            $.confirm({
+                                                theme: 'dark',
+                                                animation: 'rotateX',
+                                                closeAnimation: 'rotateX',
+                                                title: false,
+                                                content: value.errorMsg,
+                                                buttons: {
+                                                    confirm: {
+                                                        text: '确认',
+                                                        btnClass: 'waves-effect waves-button waves-light'
+                                                    }
+                                                }
+                                            });
+                                        });
+                                    } else {
+                                        $.confirm({
+                                            theme: 'dark',
+                                            animation: 'rotateX',
+                                            closeAnimation: 'rotateX',
+                                            title: false,
+                                            content: result.data.errorMsg,
+                                            buttons: {
+                                                confirm: {
+                                                    text: '确认',
+                                                    btnClass: 'waves-effect waves-button waves-light'
+                                                }
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    deleteDialog.close();
+                                    $table.bootstrapTable('refresh');
+                                }
+                            },
+                            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                                $.confirm({
+                                    theme: 'dark',
+                                    animation: 'rotateX',
+                                    closeAnimation: 'rotateX',
+                                    title: false,
+                                    content: textStatus,
+                                    buttons: {
+                                        confirm: {
+                                            text: '确认',
+                                            btnClass: 'waves-effect waves-button waves-light'
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    }
+                },
+                cancel: {
+                    text: '取消',
+                    btnClass: 'waves-effect waves-button'
+                }
+            }
+        });
+	} else if (rows.length == 0 && pageId == null) {
 		$.confirm({
 			title: false,
 			content: '请至少选择一条记录！',
