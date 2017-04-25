@@ -64,8 +64,8 @@ $(function() {
 // 格式化操作按钮
 function actionFormatter(value, row, index) {
     return [
-		'<a class="update" href="javascript:;" onclick="updateAction()" data-toggle="tooltip" title="Edit"><i class="glyphicon glyphicon-edit"></i></a>　',
-		'<a class="delete" href="javascript:;" onclick="deleteAction()" data-toggle="tooltip" title="Remove"><i class="glyphicon glyphicon-remove"></i></a>'
+		'<a class="update" href="javascript:;" onclick="updateAction('+row.roleId+')" data-toggle="tooltip" title="Edit"><i class="glyphicon glyphicon-edit"></i></a>　',
+		'<a class="delete" href="javascript:;" onclick="deleteAction('+row.roleId+')" data-toggle="tooltip" title="Remove"><i class="glyphicon glyphicon-remove"></i></a>'
     ].join('');
 }
 // 新增
@@ -82,9 +82,18 @@ function createAction() {
 }
 // 编辑
 var updateDialog;
-function updateAction() {
+function updateAction(roleId) {
 	var rows = $table.bootstrapTable('getSelections');
-	if (rows.length != 1) {
+	if (roleId != null) {
+        updateDialog = $.dialog({
+            animationSpeed: 300,
+            title: '编辑角色',
+            content: 'url:${basePath}/manage/role/update/' + roleId,
+            onContentReady: function () {
+                initMaterialInput();
+            }
+        });
+	} else if (rows.length != 1 && roleId == null) {
 		$.confirm({
 			title: false,
 			content: '请选择一条记录！',
@@ -110,9 +119,87 @@ function updateAction() {
 }
 // 删除
 var deleteDialog;
-function deleteAction() {
+function deleteAction(roleId) {
 	var rows = $table.bootstrapTable('getSelections');
-	if (rows.length == 0) {
+	if (roleId != null) {
+        deleteDialog = $.confirm({
+            type: 'red',
+            animationSpeed: 300,
+            title: false,
+            content: '确认删除该角色吗？',
+            buttons: {
+                confirm: {
+                    text: '确认',
+                    btnClass: 'waves-effect waves-button',
+                    action: function () {
+                        var ids = new Array();
+						ids.push(roleId);
+                        $.ajax({
+                            type: 'get',
+                            url: '${basePath}/manage/role/delete/' + ids.join("-"),
+                            success: function(result) {
+                                if (result.code != 1) {
+                                    if (result.data instanceof Array) {
+                                        $.each(result.data, function(index, value) {
+                                            $.confirm({
+                                                theme: 'dark',
+                                                animation: 'rotateX',
+                                                closeAnimation: 'rotateX',
+                                                title: false,
+                                                content: value.errorMsg,
+                                                buttons: {
+                                                    confirm: {
+                                                        text: '确认',
+                                                        btnClass: 'waves-effect waves-button waves-light'
+                                                    }
+                                                }
+                                            });
+                                        });
+                                    } else {
+                                        $.confirm({
+                                            theme: 'dark',
+                                            animation: 'rotateX',
+                                            closeAnimation: 'rotateX',
+                                            title: false,
+                                            content: result.data.errorMsg,
+                                            buttons: {
+                                                confirm: {
+                                                    text: '确认',
+                                                    btnClass: 'waves-effect waves-button waves-light'
+                                                }
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    deleteDialog.close();
+                                    $table.bootstrapTable('refresh');
+                                }
+                            },
+                            error: function(XMLHttpRequest, textStatus, errorThrown) {
+                                $.confirm({
+                                    theme: 'dark',
+                                    animation: 'rotateX',
+                                    closeAnimation: 'rotateX',
+                                    title: false,
+                                    content: textStatus,
+                                    buttons: {
+                                        confirm: {
+                                            text: '确认',
+                                            btnClass: 'waves-effect waves-button waves-light'
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    }
+                },
+                cancel: {
+                    text: '取消',
+                    btnClass: 'waves-effect waves-button'
+                }
+            }
+        });
+	} else if (rows.length == 0 && roleId == null) {
 		$.confirm({
 			title: false,
 			content: '请至少选择一条记录！',

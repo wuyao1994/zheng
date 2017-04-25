@@ -146,9 +146,7 @@ function deleteAction(systemId) {
                     btnClass: 'waves-effect waves-button',
                     action: function () {
                         var ids = new Array();
-                        for (var i in rows) {
-                            ids.push(systemId);
-                        }
+                        ids.push(systemId);
                         $.ajax({
                             type: 'get',
                             url: '${basePath}/manage/system/delete/' + ids.join("-"),

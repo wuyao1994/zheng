@@ -131,9 +131,7 @@ function deleteAction(organizationId) {
                     btnClass: 'waves-effect waves-button',
                     action: function () {
                         var ids = new Array();
-                        for (var i in rows) {
-                            ids.push(organizationId);
-                        }
+                        ids.push(organizationId);
                         $.ajax({
                             type: 'get',
                             url: '${basePath}/manage/organization/delete/' + ids.join("-"),
