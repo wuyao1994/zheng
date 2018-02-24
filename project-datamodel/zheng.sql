@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50621
 File Encoding         : 65001
 
-Date: 2017-04-14 23:07:46
+Date: 2017-07-23 23:13:56
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -493,6 +493,107 @@ CREATE TABLE `pay_vest` (
 -- ----------------------------
 
 -- ----------------------------
+-- Table structure for ucenter_oauth
+-- ----------------------------
+DROP TABLE IF EXISTS `ucenter_oauth`;
+CREATE TABLE `ucenter_oauth` (
+  `oauth_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `name` varchar(20) DEFAULT NULL COMMENT '认证方式名称',
+  PRIMARY KEY (`oauth_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COMMENT='认证方式表';
+
+-- ----------------------------
+-- Records of ucenter_oauth
+-- ----------------------------
+INSERT INTO `ucenter_oauth` VALUES ('1', '手机');
+INSERT INTO `ucenter_oauth` VALUES ('2', '微信');
+INSERT INTO `ucenter_oauth` VALUES ('3', 'QQ');
+INSERT INTO `ucenter_oauth` VALUES ('4', '微博');
+
+-- ----------------------------
+-- Table structure for ucenter_user
+-- ----------------------------
+DROP TABLE IF EXISTS `ucenter_user`;
+CREATE TABLE `ucenter_user` (
+  `user_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `password` varchar(32) DEFAULT NULL COMMENT '密码(MD5(密码+盐))',
+  `salt` varchar(32) DEFAULT NULL COMMENT '盐',
+  `nickname` varchar(20) DEFAULT NULL COMMENT '昵称',
+  `sex` tinyint(4) DEFAULT '0' COMMENT '性别(0:未知,1:男,2:女)',
+  `avatar` varchar(100) DEFAULT NULL COMMENT '头像',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
+  `create_ip` varchar(50) DEFAULT NULL COMMENT '注册IP地址',
+  `last_login_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '最后登录时间',
+  `last_login_ip` varchar(50) DEFAULT NULL COMMENT '最后登录IP地址',
+  PRIMARY KEY (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+-- ----------------------------
+-- Records of ucenter_user
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for ucenter_user_details
+-- ----------------------------
+DROP TABLE IF EXISTS `ucenter_user_details`;
+CREATE TABLE `ucenter_user_details` (
+  `user_id` int(10) unsigned NOT NULL COMMENT '编号',
+  `signature` varchar(300) DEFAULT NULL COMMENT '个性签名',
+  `real_name` varchar(20) DEFAULT NULL COMMENT '真实姓名',
+  `birthday` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '出生日期',
+  `question` varchar(100) DEFAULT NULL COMMENT '帐号安全问题',
+  `answer` varchar(100) DEFAULT NULL COMMENT '帐号安全答案',
+  PRIMARY KEY (`user_id`),
+  CONSTRAINT `FK_Reference_41` FOREIGN KEY (`user_id`) REFERENCES `ucenter_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户详情表';
+
+-- ----------------------------
+-- Records of ucenter_user_details
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for ucenter_user_log
+-- ----------------------------
+DROP TABLE IF EXISTS `ucenter_user_log`;
+CREATE TABLE `ucenter_user_log` (
+  `user_log_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `user_id` int(10) unsigned DEFAULT NULL COMMENT '用户编号',
+  `content` varbinary(100) DEFAULT NULL COMMENT '内容',
+  `ip` varchar(20) DEFAULT NULL COMMENT '操作IP地址',
+  `agent` varbinary(200) DEFAULT NULL COMMENT '操作环境',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+  PRIMARY KEY (`user_log_id`),
+  KEY `FK_Reference_44` (`user_id`),
+  CONSTRAINT `FK_Reference_44` FOREIGN KEY (`user_id`) REFERENCES `ucenter_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户操作日志表';
+
+-- ----------------------------
+-- Records of ucenter_user_log
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for ucenter_user_oauth
+-- ----------------------------
+DROP TABLE IF EXISTS `ucenter_user_oauth`;
+CREATE TABLE `ucenter_user_oauth` (
+  `user_oauth_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '编号',
+  `user_id` int(10) unsigned NOT NULL COMMENT '帐号编号',
+  `oauth_id` int(10) unsigned NOT NULL COMMENT '认证方式编号',
+  `open_id` varbinary(50) NOT NULL COMMENT '第三方ID',
+  `status` tinyint(4) unsigned DEFAULT NULL COMMENT '绑定状态(0:解绑,1:绑定)',
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`user_oauth_id`),
+  KEY `FK_Reference_42` (`user_id`),
+  KEY `FK_Reference_43` (`oauth_id`),
+  CONSTRAINT `FK_Reference_42` FOREIGN KEY (`user_id`) REFERENCES `ucenter_user` (`user_id`),
+  CONSTRAINT `FK_Reference_43` FOREIGN KEY (`oauth_id`) REFERENCES `ucenter_oauth` (`oauth_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户认证方式表';
+
+-- ----------------------------
+-- Records of ucenter_user_oauth
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for upms_log
 -- ----------------------------
 DROP TABLE IF EXISTS `upms_log`;
@@ -511,8 +612,9 @@ CREATE TABLE `upms_log` (
   `ip` varchar(30) DEFAULT NULL COMMENT 'IP地址',
   `result` mediumtext,
   `permissions` varchar(100) DEFAULT NULL COMMENT '权限值',
-  PRIMARY KEY (`log_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=348 DEFAULT CHARSET=utf8mb4 COMMENT='操作日志';
+  PRIMARY KEY (`log_id`),
+  KEY `log_id` (`log_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=779 DEFAULT CHARSET=utf8mb4 COMMENT='操作日志';
 
 -- ----------------------------
 -- Records of upms_log
@@ -780,7 +882,7 @@ DROP TABLE IF EXISTS `upms_system`;
 CREATE TABLE `upms_system` (
   `system_id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '编号',
   `icon` varchar(50) DEFAULT NULL COMMENT '图标',
-  `banner` varchar(50) DEFAULT NULL COMMENT '背景',
+  `banner` varchar(150) DEFAULT NULL COMMENT '背景',
   `theme` varchar(50) DEFAULT NULL COMMENT '主题',
   `basepath` varchar(100) DEFAULT NULL COMMENT '根目录',
   `status` tinyint(4) DEFAULT NULL COMMENT '状态(-1:黑名单,1:正常)',
@@ -811,19 +913,20 @@ CREATE TABLE `upms_user` (
   `password` varchar(32) NOT NULL COMMENT '密码MD5(密码+盐)',
   `salt` varchar(32) DEFAULT NULL COMMENT '盐',
   `realname` varchar(20) DEFAULT NULL COMMENT '姓名',
-  `avatar` varchar(50) DEFAULT NULL COMMENT '头像',
+  `avatar` varchar(150) DEFAULT NULL COMMENT '头像',
   `phone` varchar(20) DEFAULT NULL COMMENT '电话',
   `email` varchar(50) DEFAULT NULL COMMENT '邮箱',
   `sex` tinyint(4) DEFAULT NULL COMMENT '性别',
   `locked` tinyint(4) DEFAULT NULL COMMENT '状态(0:正常,1:锁定)',
   `ctime` bigint(20) DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COMMENT='用户';
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COMMENT='用户';
 
 -- ----------------------------
 -- Records of upms_user
 -- ----------------------------
 INSERT INTO `upms_user` VALUES ('1', 'admin', '3038D9CB63B3152A79B8153FB06C02F7', '66f1b370c660445a8657bf8bf1794486', '张恕征', '/resources/zheng-admin/images/avatar.jpg', '', '469741414@qq.com', '1', '0', '1');
+INSERT INTO `upms_user` VALUES ('2', 'test', '285C9762F5F9046F5893F752DFAF3476', 'd2d0d03310444ad388a8b290b0fe8564', '张恕征', '/resources/zheng-admin/images/avatar.jpg', '', '469741414@qq.com', '1', '0', '1493394720495');
 
 -- ----------------------------
 -- Table structure for upms_user_organization
@@ -855,13 +958,33 @@ CREATE TABLE `upms_user_permission` (
   `permission_id` int(10) unsigned NOT NULL COMMENT '权限编号',
   `type` tinyint(4) NOT NULL COMMENT '权限类型(-1:减权限,1:增权限)',
   PRIMARY KEY (`user_permission_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COMMENT='用户权限关联表';
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COMMENT='用户权限关联表';
 
 -- ----------------------------
 -- Records of upms_user_permission
 -- ----------------------------
 INSERT INTO `upms_user_permission` VALUES ('3', '1', '22', '-1');
 INSERT INTO `upms_user_permission` VALUES ('4', '1', '22', '1');
+INSERT INTO `upms_user_permission` VALUES ('5', '2', '24', '-1');
+INSERT INTO `upms_user_permission` VALUES ('6', '2', '26', '-1');
+INSERT INTO `upms_user_permission` VALUES ('7', '2', '27', '-1');
+INSERT INTO `upms_user_permission` VALUES ('8', '2', '29', '-1');
+INSERT INTO `upms_user_permission` VALUES ('9', '2', '32', '-1');
+INSERT INTO `upms_user_permission` VALUES ('10', '2', '51', '-1');
+INSERT INTO `upms_user_permission` VALUES ('11', '2', '48', '-1');
+INSERT INTO `upms_user_permission` VALUES ('12', '2', '50', '-1');
+INSERT INTO `upms_user_permission` VALUES ('13', '2', '35', '-1');
+INSERT INTO `upms_user_permission` VALUES ('14', '2', '46', '-1');
+INSERT INTO `upms_user_permission` VALUES ('15', '2', '37', '-1');
+INSERT INTO `upms_user_permission` VALUES ('16', '2', '38', '-1');
+INSERT INTO `upms_user_permission` VALUES ('17', '2', '57', '-1');
+INSERT INTO `upms_user_permission` VALUES ('18', '2', '56', '-1');
+INSERT INTO `upms_user_permission` VALUES ('19', '2', '59', '-1');
+INSERT INTO `upms_user_permission` VALUES ('20', '2', '78', '-1');
+INSERT INTO `upms_user_permission` VALUES ('21', '2', '67', '-1');
+INSERT INTO `upms_user_permission` VALUES ('22', '2', '83', '-1');
+INSERT INTO `upms_user_permission` VALUES ('23', '2', '71', '-1');
+INSERT INTO `upms_user_permission` VALUES ('24', '2', '75', '-1');
 
 -- ----------------------------
 -- Table structure for upms_user_role
@@ -872,10 +995,12 @@ CREATE TABLE `upms_user_role` (
   `user_id` int(10) unsigned NOT NULL COMMENT '用户编号',
   `role_id` int(10) DEFAULT NULL COMMENT '角色编号',
   PRIMARY KEY (`user_role_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COMMENT='用户角色关联表';
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COMMENT='用户角色关联表';
 
 -- ----------------------------
 -- Records of upms_user_role
 -- ----------------------------
 INSERT INTO `upms_user_role` VALUES ('4', '1', '1');
 INSERT INTO `upms_user_role` VALUES ('5', '1', '2');
+INSERT INTO `upms_user_role` VALUES ('6', '2', '1');
+INSERT INTO `upms_user_role` VALUES ('7', '2', '2');
