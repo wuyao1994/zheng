@@ -8,6 +8,11 @@
     <description>zheng-upms</description>
 
     <context:property-placeholder location="classpath*:zheng-upms-client.properties"/>
+    <!-- 重写authc过滤器 -->
+    <bean id="upmsAuthenticationFilter" class="com.zheng.upms.client.shiro.filter.UpmsAuthenticationFilter"/>
+
+    <!-- 强制退出会话过滤器 -->
+    <bean id="upmsSessionForceLogout" class="com.zheng.upms.client.shiro.filter.UpmsSessionForceLogoutFilter"/>
 
     <!-- Shiro的Web过滤器 -->
     <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
@@ -32,11 +37,8 @@
         </property>
     </bean>
 
-    <!-- 重写authc过滤器 -->
-    <bean id="upmsAuthenticationFilter" class="com.zheng.upms.client.shiro.filter.UpmsAuthenticationFilter"/>
-
-    <!-- 强制退出会话过滤器 -->
-    <bean id="upmsSessionForceLogout" class="com.zheng.upms.client.shiro.filter.UpmsSessionForceLogoutFilter"/>
+    <!-- realm实现，继承自AuthorizingRealm -->
+    <bean id="upmsRealm" class="com.zheng.upms.client.shiro.realm.UpmsRealm"></bean>
 
     <!-- 安全管理器 -->
     <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
@@ -45,24 +47,7 @@
         </property>
         <property name="sessionManager" ref="sessionManager"/>
         <property name="rememberMeManager" ref="rememberMeManager"/>
-    </bean>
-
-    <!-- realm实现，继承自AuthorizingRealm -->
-    <bean id="upmsRealm" class="com.zheng.upms.client.shiro.realm.UpmsRealm"></bean>
-
-    <!-- 会话管理器 -->
-    <bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
-        <!-- 全局session超时时间 -->
-        <property name="globalSessionTimeout" value="${zheng.upms.session.timeout}"/>
-        <!-- sessionDAO -->
-        <property name="sessionDAO" ref="sessionDAO"/>
-        <property name="sessionIdCookieEnabled" value="true"/>
-        <property name="sessionIdCookie" ref="sessionIdCookie"/>
-        <property name="sessionValidationSchedulerEnabled" value="false"/>
-        <property name="sessionListeners">
-            <list><ref bean="sessionListener"/></list>
-        </property>
-        <property name="sessionFactory" ref="sessionFactory"/>
+        <property name="cacheManager" ref="ehcacheManager" />
     </bean>
 
     <!-- 会话DAO，可重写，持久化session -->
@@ -84,11 +69,19 @@
     <!-- session工厂 -->
     <bean id="sessionFactory" class="com.zheng.upms.client.shiro.session.UpmsSessionFactory"/>
 
-    <!-- rememberMe管理器 -->
-    <bean id="rememberMeManager" class="org.apache.shiro.web.mgt.CookieRememberMeManager">
-        <!-- rememberMe cookie加密的密钥 建议每个项目都不一样 默认AES算法 密钥长度（128 256 512 位）-->
-        <property name="cipherKey" value="#{T(org.apache.shiro.codec.Base64).decode('4AvVhmFLUs0KTA3Kprsdag==')}"/>
-        <property name="cookie" ref="rememberMeCookie"/>
+    <!-- 会话管理器 -->
+    <bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
+        <!-- 全局session超时时间 -->
+        <property name="globalSessionTimeout" value="${zheng.upms.session.timeout}"/>
+        <!-- sessionDAO -->
+        <property name="sessionDAO" ref="sessionDAO"/>
+        <property name="sessionIdCookieEnabled" value="true"/>
+        <property name="sessionIdCookie" ref="sessionIdCookie"/>
+        <property name="sessionValidationSchedulerEnabled" value="false"/>
+        <property name="sessionListeners">
+            <list><ref bean="sessionListener"/></list>
+        </property>
+        <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
 
     <!-- rememberMe缓存cookie -->
@@ -99,6 +92,19 @@
         <!-- 记住我cookie生效时间 -->
         <property name="maxAge" value="${zheng.upms.rememberMe.timeout}"/>
     </bean>
+
+    <!-- rememberMe管理器 -->
+    <bean id="rememberMeManager" class="org.apache.shiro.web.mgt.CookieRememberMeManager">
+        <!-- rememberMe cookie加密的密钥 建议每个项目都不一样 默认AES算法 密钥长度（128 256 512 位）-->
+        <property name="cipherKey" value="#{T(org.apache.shiro.codec.Base64).decode('4AvVhmFLUs0KTA3Kprsdag==')}"/>
+        <property name="cookie" ref="rememberMeCookie"/>
+    </bean>
+
+    <!-- shiro的缓存管理器，然后需要将缓存管理器注入到安全管理其中  -->
+    <bean id="ehcacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+        <property name="cacheManagerConfigFile" value="classpath:ehcache-shiro.xml" />  <!--classpath是缓存属性的配置文件  -->
+    </bean>
+
 
     <!-- 设置SecurityUtils，相当于调用SecurityUtils.setSecurityManager(securityManager) -->
     <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
